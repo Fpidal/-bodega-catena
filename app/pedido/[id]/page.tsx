@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { redirect, notFound } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Header from '@/components/Header';
 import Link from 'next/link';
 import { formatPrecio, formatFecha, getEstadoColor, getEstadoTexto } from '@/lib/utils';
@@ -9,6 +9,26 @@ import PedidoPDFButton from './PedidoPDFButton';
 export const metadata = {
   title: 'Detalle de Pedido - Bodega Catena Zapata',
   description: 'Detalle de orden de compra',
+};
+
+// Cliente de prueba para desarrollo
+const clientePrueba = {
+  id: 'dev-client',
+  user_id: 'dev-user',
+  razon_social: 'Cliente de Prueba',
+  cuit: '00-00000000-0',
+  direccion: 'Dirección de prueba',
+  ciudad: 'Mendoza',
+  provincia: 'Mendoza',
+  codigo_postal: '5500',
+  telefono: '000-0000000',
+  email: 'prueba@test.com',
+  tipo_cliente: 'mayorista' as const,
+  descuento_general: 0,
+  credito_disponible: 0,
+  activo: true,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
 };
 
 interface Props {
@@ -22,27 +42,25 @@ export default async function PedidoPage({ params }: Props) {
   // Get current user
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect('/login');
+  let cliente = clientePrueba;
+
+  if (user) {
+    const { data: clienteData } = await supabase
+      .from('clientes')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (clienteData) {
+      cliente = clienteData;
+    }
   }
 
-  // Get cliente data
-  const { data: cliente } = await supabase
-    .from('clientes')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
-
-  if (!cliente) {
-    redirect('/login');
-  }
-
-  // Get order with items
+  // Get order with items (for dev, get any order by id)
   const { data: orden } = await supabase
     .from('ordenes')
     .select('*')
     .eq('id', id)
-    .eq('cliente_id', cliente.id)
     .single();
 
   if (!orden) {
@@ -58,10 +76,10 @@ export default async function PedidoPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-background">
       <Header
-        user={{
+        user={user ? {
           email: user.email || '',
           razon_social: cliente.razon_social,
-        }}
+        } : null}
       />
 
       <main className="container-narrow py-8">

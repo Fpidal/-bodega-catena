@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
 import Header from '@/components/Header';
 import CarritoClient from './CarritoClient';
 
@@ -8,25 +7,44 @@ export const metadata = {
   description: 'Tu carrito de compras',
 };
 
+// Cliente de prueba para desarrollo
+const clientePrueba = {
+  id: 'dev-client',
+  user_id: 'dev-user',
+  razon_social: 'Cliente de Prueba',
+  cuit: '00-00000000-0',
+  direccion: 'Dirección de prueba',
+  ciudad: 'Mendoza',
+  provincia: 'Mendoza',
+  codigo_postal: '5500',
+  telefono: '000-0000000',
+  email: 'prueba@test.com',
+  tipo_cliente: 'mayorista' as const,
+  descuento_general: 0,
+  credito_disponible: 0,
+  activo: true,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
 export default async function CarritoPage() {
   const supabase = await createClient();
 
   // Get current user
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect('/login');
-  }
+  let cliente = clientePrueba;
 
-  // Get cliente data
-  const { data: cliente } = await supabase
-    .from('clientes')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
+  if (user) {
+    const { data: clienteData } = await supabase
+      .from('clientes')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
 
-  if (!cliente) {
-    redirect('/login');
+    if (clienteData) {
+      cliente = clienteData;
+    }
   }
 
   // Get active promotions
@@ -38,10 +56,10 @@ export default async function CarritoPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header
-        user={{
+        user={user ? {
           email: user.email || '',
           razon_social: cliente.razon_social,
-        }}
+        } : null}
       />
 
       <main className="container-wide py-8">
