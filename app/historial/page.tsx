@@ -93,60 +93,90 @@ export default async function HistorialPage() {
           </div>
         </div>
 
-        {/* Orders table */}
+        {/* Orders - Cards en móvil, Tabla en desktop */}
         {ordenes && ordenes.length > 0 ? (
-          <div className="bg-blanco-roto rounded-lg border border-border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>N° Orden</th>
-                    <th>Fecha</th>
-                    <th className="hidden md:table-cell">Items</th>
-                    <th>Subtotal</th>
-                    <th className="hidden sm:table-cell">Descuentos</th>
-                    <th>Total</th>
-                    <th>Estado</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ordenes.map((orden) => (
-                    <tr key={orden.id}>
-                      <td className="font-mono font-medium text-texto">{orden.numero}</td>
-                      <td className="text-texto-muted">{formatFecha(orden.created_at)}</td>
-                      <td className="hidden md:table-cell text-texto-muted">
-                        {(orden.orden_items as { count: number }[])?.[0]?.count || 0} productos
-                      </td>
-                      <td className="text-texto-muted">{formatPrecio(orden.subtotal)}</td>
-                      <td className="hidden sm:table-cell">
-                        {orden.descuento_total > 0 ? (
-                          <span className="text-verde-oliva">-{formatPrecio(orden.descuento_total)}</span>
-                        ) : (
-                          <span className="text-texto-muted">-</span>
-                        )}
-                      </td>
-                      <td className="font-semibold text-bordo">{formatPrecio(orden.total)}</td>
-                      <td>
-                        <span className={getEstadoColor(orden.estado)}>
-                          {getEstadoTexto(orden.estado)}
-                        </span>
-                      </td>
-                      <td>
-                        <Link
-                          href={`/pedido/${orden.id}`}
-                          className="btn btn-ghost btn-sm"
-                        >
-                          <Eye className="w-4 h-4" />
-                          <span className="hidden sm:inline">Ver</span>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <>
+            {/* Vista móvil - Cards */}
+            <div className="md:hidden space-y-4">
+              {ordenes.map((orden) => (
+                <Link
+                  key={orden.id}
+                  href={`/pedido/${orden.id}`}
+                  className="card block hover:border-bordo/30 transition-colors"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p className="font-mono font-semibold text-texto">{orden.numero}</p>
+                      <p className="text-sm text-texto-muted">{formatFecha(orden.created_at)}</p>
+                    </div>
+                    <span className={getEstadoColor(orden.estado)}>
+                      {getEstadoTexto(orden.estado)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pt-3 border-t border-border">
+                    <span className="text-sm text-texto-muted">
+                      {(orden.orden_items as { count: number }[])?.[0]?.count || 0} productos
+                    </span>
+                    <span className="font-semibold text-bordo text-lg">{formatPrecio(orden.total)}</span>
+                  </div>
+                </Link>
+              ))}
             </div>
-          </div>
+
+            {/* Vista desktop - Tabla */}
+            <div className="hidden md:block bg-blanco-roto rounded-lg border border-border overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>N° Orden</th>
+                      <th>Fecha</th>
+                      <th>Items</th>
+                      <th>Subtotal</th>
+                      <th>Descuentos</th>
+                      <th>Total</th>
+                      <th>Estado</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ordenes.map((orden) => (
+                      <tr key={orden.id}>
+                        <td className="font-mono font-medium text-texto">{orden.numero}</td>
+                        <td className="text-texto-muted">{formatFecha(orden.created_at)}</td>
+                        <td className="text-texto-muted">
+                          {(orden.orden_items as { count: number }[])?.[0]?.count || 0} productos
+                        </td>
+                        <td className="text-texto-muted">{formatPrecio(orden.subtotal)}</td>
+                        <td>
+                          {orden.descuento_total > 0 ? (
+                            <span className="text-verde-oliva">-{formatPrecio(orden.descuento_total)}</span>
+                          ) : (
+                            <span className="text-texto-muted">-</span>
+                          )}
+                        </td>
+                        <td className="font-semibold text-bordo">{formatPrecio(orden.total)}</td>
+                        <td>
+                          <span className={getEstadoColor(orden.estado)}>
+                            {getEstadoTexto(orden.estado)}
+                          </span>
+                        </td>
+                        <td>
+                          <Link
+                            href={`/pedido/${orden.id}`}
+                            className="btn btn-ghost btn-sm"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Ver
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         ) : (
           <div className="text-center py-16 bg-blanco-roto rounded-lg border border-border">
             <Package className="w-16 h-16 text-texto-muted/30 mx-auto mb-4" />
