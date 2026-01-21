@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 import Header from '@/components/Header';
 import { formatPrecio } from '@/lib/utils';
 import { Wine, Download } from 'lucide-react';
@@ -30,18 +31,19 @@ interface ProductoConMarca {
 export default async function PreciosPage() {
   const supabase = await createClient();
 
-  // Get current user
+  // Get current user - REQUIERE LOGIN
   const { data: { user } } = await supabase.auth.getUser();
 
-  let cliente = null;
-  if (user) {
-    const { data: clienteData } = await supabase
-      .from('clientes')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-    cliente = clienteData;
+  if (!user) {
+    redirect('/login');
   }
+
+  // Get cliente data
+  const { data: cliente } = await supabase
+    .from('clientes')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
 
   // Get all products grouped by marca
   const { data: productos } = await supabase

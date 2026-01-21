@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 import Header from '@/components/Header';
 import CatalogoClient from './CatalogoClient';
 
@@ -10,18 +11,19 @@ export const metadata = {
 export default async function CatalogoPage() {
   const supabase = await createClient();
 
-  // Get current user
+  // Get current user - REQUIERE LOGIN
   const { data: { user } } = await supabase.auth.getUser();
 
-  let cliente = null;
-  if (user) {
-    const { data: clienteData } = await supabase
-      .from('clientes')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-    cliente = clienteData;
+  if (!user) {
+    redirect('/login');
   }
+
+  // Get cliente data
+  const { data: cliente } = await supabase
+    .from('clientes')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
 
   // Get all products with joins
   const { data: productos, error: productosError } = await supabase

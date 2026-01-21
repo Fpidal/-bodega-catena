@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { notFound } from 'next/navigation';
+import { redirect, notFound } from 'next/navigation';
 import Header from '@/components/Header';
 import Link from 'next/link';
 import { formatPrecio, formatFecha, getEstadoColor, getEstadoTexto } from '@/lib/utils';
@@ -11,26 +11,6 @@ export const metadata = {
   description: 'Detalle de orden de compra',
 };
 
-// Cliente de prueba para desarrollo
-const clientePrueba = {
-  id: 'dev-client',
-  user_id: 'dev-user',
-  razon_social: 'Cliente de Prueba',
-  cuit: '00-00000000-0',
-  direccion: 'Dirección de prueba',
-  ciudad: 'Mendoza',
-  provincia: 'Mendoza',
-  codigo_postal: '5500',
-  telefono: '000-0000000',
-  email: 'prueba@test.com',
-  tipo_cliente: 'mayorista' as const,
-  descuento_general: 0,
-  credito_disponible: 0,
-  activo: true,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
-
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -39,28 +19,30 @@ export default async function PedidoPage({ params }: Props) {
   const { id } = await params;
   const supabase = await createClient();
 
-  // Get current user
+  // Get current user - REQUIERE LOGIN
   const { data: { user } } = await supabase.auth.getUser();
 
-  let cliente = clientePrueba;
-
-  if (user) {
-    const { data: clienteData } = await supabase
-      .from('clientes')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-
-    if (clienteData) {
-      cliente = clienteData;
-    }
+  if (!user) {
+    redirect('/login');
   }
 
-  // Get order with items (for dev, get any order by id)
+  // Get cliente data
+  const { data: cliente } = await supabase
+    .from('clientes')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!cliente) {
+    redirect('/login');
+  }
+
+  // Get order with items
   const { data: orden } = await supabase
     .from('ordenes')
     .select('*')
     .eq('id', id)
+    .eq('cliente_id', cliente.id)
     .single();
 
   if (!orden) {
