@@ -44,72 +44,36 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left side - Hero */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-tierra via-tierra to-terracota relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10" />
-        <div className="relative z-10 flex flex-col justify-center p-12 xl:p-16">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">
-              <Wine className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <span className="font-serif text-2xl font-bold text-white block">
-                Catena Zapata
-              </span>
-              <span className="text-white/70 text-sm">Portal Distribuidores</span>
-            </div>
-          </div>
+    <div className="min-h-screen bg-crema flex items-center justify-center p-8 relative">
+      {/* Imagen de fondo sutil */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: "url('https://agxpjqqfoozgsuuwaskd.supabase.co/storage/v1/object/public/Logos%20CATENA/imagen%20bodeaga%204.jpeg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
 
-          <h1 className="font-serif text-4xl xl:text-5xl font-bold text-white mb-6 leading-tight">
-            Vinos de alta gama para tu negocio
-          </h1>
-          <p className="text-white/80 text-lg mb-8 max-w-lg">
-            Accedé a nuestra selección premium de vinos mendocinos. Precios exclusivos
-            para mayoristas y distribuidores autorizados.
-          </p>
-
-          <div className="space-y-4">
-            {[
-              'Más de 70 etiquetas disponibles',
-              'Descuentos exclusivos por volumen',
-              'Envío sin cargo en pedidos grandes',
-              'Soporte dedicado para distribuidores',
-            ].map((feature) => (
-              <div key={feature} className="flex items-center gap-3 text-white/90">
-                <div className="w-6 h-6 rounded-full bg-dorado/30 flex items-center justify-center">
-                  <Wine className="w-3 h-3 text-dorado" />
-                </div>
-                {feature}
-              </div>
-            ))}
-          </div>
+      {/* Form */}
+      <div className="w-full max-w-sm relative z-10">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-10">
+          <img
+            src="https://agxpjqqfoozgsuuwaskd.supabase.co/storage/v1/object/public/Logos%20CATENA/logo%20portada.jpeg"
+            alt="Catena Zapata"
+            className="h-16 w-auto rounded mb-4"
+          />
+          <span className="font-serif text-xl font-medium text-texto tracking-wide">Portal Distribuidores</span>
         </div>
 
-        {/* Decorative elements */}
-        <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-terracota/30 rounded-full blur-3xl" />
-        <div className="absolute top-20 -right-10 w-40 h-40 bg-dorado/20 rounded-full blur-2xl" />
-      </div>
-
-      {/* Right side - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
-        <div className="w-full max-w-md">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-terracota rounded-full flex items-center justify-center">
-              <Wine className="w-6 h-6 text-white" />
-            </div>
-            <span className="font-serif text-2xl font-bold text-tierra">Catena Zapata</span>
-          </div>
-
-          <div className="text-center mb-8">
-            <h2 className="font-serif text-3xl font-bold text-tierra mb-2">Bienvenido</h2>
-            <p className="text-muted">Ingresá con tu cuenta de distribuidor</p>
-          </div>
+        <div className="text-center mb-6">
+          <p className="text-texto-muted text-sm">Ingresá con tu cuenta</p>
+        </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
             {error && (
-              <div className="flex items-center gap-3 p-4 bg-error/10 border border-error/20 rounded-lg text-error">
+              <div className="flex items-center gap-3 p-4 bg-bordo/10 border border-bordo/20 rounded-lg text-bordo">
                 <AlertCircle className="w-5 h-5 shrink-0" />
                 <p className="text-sm">{error}</p>
               </div>
@@ -120,7 +84,7 @@ export default function LoginPage() {
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-texto-muted" />
                 <input
                   id="email"
                   type="email"
@@ -139,7 +103,7 @@ export default function LoginPage() {
                 Contraseña
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-texto-muted" />
                 <input
                   id="password"
                   type="password"
@@ -170,11 +134,11 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-8 text-center">
-            <p className="text-sm text-muted">
+            <p className="text-sm text-texto-muted">
               ¿No tenés cuenta?{' '}
               <a
                 href="mailto:distribuidores@catenazapata.com"
-                className="text-terracota hover:underline font-medium"
+                className="text-bordo hover:underline font-medium"
               >
                 Contactanos
               </a>
@@ -184,13 +148,12 @@ export default function LoginPage() {
           <div className="mt-8 pt-8 border-t border-border">
             <Link
               href="/"
-              className="block text-center text-sm text-muted hover:text-tierra transition-colors"
+              className="block text-center text-sm text-texto-muted hover:text-texto transition-colors"
             >
               ← Volver al inicio
             </Link>
           </div>
         </div>
-      </div>
     </div>
   );
 }

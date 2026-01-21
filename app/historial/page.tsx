@@ -44,7 +44,7 @@ export default async function HistorialPage() {
   const ultimaOrden = ordenes?.[0];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-crema">
       <Header
         user={user ? {
           email: user.email || '',
@@ -52,28 +52,31 @@ export default async function HistorialPage() {
         } : null}
       />
 
-      <main className="container-wide py-8">
-        <h1 className="font-serif text-4xl font-bold text-tierra mb-8">Historial de Pedidos</h1>
+      <main className="container-wide pt-24 pb-8">
+        <div className="mb-8">
+          <p className="text-texto-muted text-sm uppercase tracking-wider mb-2">Tus Pedidos</p>
+          <h1 className="font-serif text-3xl font-semibold text-texto">Historial de Pedidos</h1>
+        </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="card flex items-center gap-4">
-            <div className="w-12 h-12 bg-terracota/10 rounded-full flex items-center justify-center">
-              <Package className="w-6 h-6 text-terracota" />
+            <div className="w-12 h-12 bg-bordo/10 rounded-full flex items-center justify-center">
+              <Package className="w-6 h-6 text-bordo" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-tierra">{totalOrdenes}</p>
-              <p className="text-sm text-muted">Pedidos realizados</p>
+              <p className="text-2xl font-semibold text-texto">{totalOrdenes}</p>
+              <p className="text-sm text-texto-muted">Pedidos realizados</p>
             </div>
           </div>
 
           <div className="card flex items-center gap-4">
-            <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-success" />
+            <div className="w-12 h-12 bg-verde-oliva/10 rounded-full flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-verde-oliva" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-tierra">{formatPrecio(totalGastado)}</p>
-              <p className="text-sm text-muted">Total en compras</p>
+              <p className="text-2xl font-semibold text-texto">{formatPrecio(totalGastado)}</p>
+              <p className="text-sm text-texto-muted">Total en compras</p>
             </div>
           </div>
 
@@ -82,17 +85,17 @@ export default async function HistorialPage() {
               <Calendar className="w-6 h-6 text-dorado" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-tierra">
+              <p className="text-2xl font-semibold text-texto">
                 {ultimaOrden ? formatFecha(ultimaOrden.created_at) : '-'}
               </p>
-              <p className="text-sm text-muted">Último pedido</p>
+              <p className="text-sm text-texto-muted">Último pedido</p>
             </div>
           </div>
         </div>
 
         {/* Orders table */}
         {ordenes && ordenes.length > 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
+          <div className="bg-blanco-roto rounded-lg border border-border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="table">
                 <thead>
@@ -110,20 +113,20 @@ export default async function HistorialPage() {
                 <tbody>
                   {ordenes.map((orden) => (
                     <tr key={orden.id}>
-                      <td className="font-mono font-medium text-tierra">{orden.numero}</td>
-                      <td className="text-muted">{formatFecha(orden.created_at)}</td>
-                      <td className="hidden md:table-cell text-muted">
+                      <td className="font-mono font-medium text-texto">{orden.numero}</td>
+                      <td className="text-texto-muted">{formatFecha(orden.created_at)}</td>
+                      <td className="hidden md:table-cell text-texto-muted">
                         {(orden.orden_items as { count: number }[])?.[0]?.count || 0} productos
                       </td>
-                      <td className="text-muted">{formatPrecio(orden.subtotal)}</td>
+                      <td className="text-texto-muted">{formatPrecio(orden.subtotal)}</td>
                       <td className="hidden sm:table-cell">
                         {orden.descuento_total > 0 ? (
-                          <span className="text-success">-{formatPrecio(orden.descuento_total)}</span>
+                          <span className="text-verde-oliva">-{formatPrecio(orden.descuento_total)}</span>
                         ) : (
-                          <span className="text-muted">-</span>
+                          <span className="text-texto-muted">-</span>
                         )}
                       </td>
-                      <td className="font-semibold text-terracota">{formatPrecio(orden.total)}</td>
+                      <td className="font-semibold text-bordo">{formatPrecio(orden.total)}</td>
                       <td>
                         <span className={getEstadoColor(orden.estado)}>
                           {getEstadoTexto(orden.estado)}
@@ -145,12 +148,12 @@ export default async function HistorialPage() {
             </div>
           </div>
         ) : (
-          <div className="text-center py-16 bg-white rounded-xl border border-border">
-            <Package className="w-16 h-16 text-muted/30 mx-auto mb-4" />
-            <h2 className="font-serif text-xl font-semibold text-tierra mb-2">
+          <div className="text-center py-16 bg-blanco-roto rounded-lg border border-border">
+            <Package className="w-16 h-16 text-texto-muted/30 mx-auto mb-4" />
+            <h2 className="font-serif text-xl font-semibold text-texto mb-2">
               No hay pedidos todavía
             </h2>
-            <p className="text-muted mb-6">Realizá tu primer pedido desde nuestro catálogo</p>
+            <p className="text-texto-muted mb-6">Realizá tu primer pedido desde nuestro catálogo</p>
             <Link href="/catalogo" className="btn btn-primary">
               Ver Catálogo
             </Link>

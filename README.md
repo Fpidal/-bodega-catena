@@ -159,11 +159,11 @@ bodega-catena/
 - `MAYORISTA15` - 15% descuento
 - `CATENA20` - 20% descuento
 
-## Promociones Automáticas
+## Beneficios para Distribuidores
 
-- 15% off en Alamos al comprar 3+ cajas
-- 10% off en Saint Felicien al comprar 2+ cajas
-- Envío gratis en pedidos +$500k
+- **Descuento 50%** sobre precios de lista (aplicado automáticamente)
+- **Promoción 10+2 Saint Felicien:** Comprando 10 cajas, recibís 2 cajas bonificadas a $0
+- Generación de PDF de orden de compra con desglose completo
 
 ## Scripts
 

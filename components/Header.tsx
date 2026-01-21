@@ -2,12 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, ShoppingCart, User, LogOut, Wine } from 'lucide-react';
+import { Menu, X, ShoppingCart, LogOut, Wine } from 'lucide-react';
 import { useState } from 'react';
 import { useHydratedCart } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
 
 interface HeaderProps {
   user: {
@@ -17,9 +16,9 @@ interface HeaderProps {
 }
 
 const navigation = [
-  { name: 'Inicio', href: '/' },
-  { name: 'Cargar Pedido', href: '/catalogo' },
-  { name: 'Precios', href: '/precios' },
+  { name: 'Catálogo', href: '/catalogo' },
+  { name: 'Pedido', href: '/carrito' },
+  { name: 'Lista de Precios', href: '/precios' },
   { name: 'Historial', href: '/historial' },
 ];
 
@@ -37,20 +36,24 @@ export default function Header({ user }: HeaderProps) {
     router.refresh();
   };
 
+  const isActive = (href: string) => pathname === href;
+
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-blanco-roto border-b border-border-strong">
       <nav className="container-wide">
-        <div className="flex items-center justify-between h-16 md:h-20">
+        <div className="flex items-center justify-between h-16 md:h-18">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-terracota rounded-full flex items-center justify-center">
-              <Wine className="w-5 h-5 text-white" />
-            </div>
+            <img
+              src="https://agxpjqqfoozgsuuwaskd.supabase.co/storage/v1/object/public/Logos%20CATENA/logo%20portada.jpeg"
+              alt="Catena Zapata"
+              className="h-10 w-auto rounded"
+            />
             <div className="hidden sm:block">
-              <span className="font-serif text-xl font-semibold text-tierra">
+              <span className="font-serif text-lg font-semibold text-texto tracking-wide">
                 Catena Zapata
               </span>
-              <span className="block text-xs text-muted -mt-1">Portal Distribuidores</span>
+              <span className="block text-xs text-texto-muted">Portal Distribuidores</span>
             </div>
           </Link>
 
@@ -60,64 +63,58 @@ export default function Header({ user }: HeaderProps) {
               <Link
                 key={item.name}
                 href={item.href}
-                className={cn(
-                  'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                  pathname === item.href
-                    ? 'bg-terracota/10 text-terracota'
-                    : 'text-tierra hover:bg-arena'
-                )}
+                className={`px-4 py-2 text-sm font-medium transition-opacity ${
+                  isActive(item.href)
+                    ? 'text-bordo'
+                    : 'text-texto-secundario hover:text-bordo'
+                }`}
               >
                 {item.name}
+                {isActive(item.href) && (
+                  <span className="block h-0.5 bg-bordo mt-0.5 rounded-full" />
+                )}
               </Link>
             ))}
           </div>
 
           {/* Right side */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {/* Cart */}
             <Link
               href="/carrito"
-              className="relative p-2 rounded-lg text-tierra hover:bg-arena transition-colors"
+              className="relative p-2 text-texto hover:text-bordo transition-colors"
+              title="Carrito"
             >
               <ShoppingCart className="w-5 h-5" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-terracota text-white text-xs rounded-full flex items-center justify-center font-medium">
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-bordo text-white text-xs rounded-full flex items-center justify-center font-medium">
                   {totalItems > 99 ? '99+' : totalItems}
                 </span>
               )}
             </Link>
 
-            {/* User Menu */}
-            {user ? (
-              <div className="hidden md:flex items-center gap-2">
+            {/* User Info & Logout */}
+            {user && (
+              <div className="hidden md:flex items-center gap-3 pl-3 border-l border-border-strong">
                 <div className="text-right">
-                  <span className="block text-sm font-medium text-tierra">
+                  <span className="block text-sm font-medium text-texto">
                     {user.razon_social || user.email}
                   </span>
-                  <span className="block text-xs text-muted">{user.email}</span>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="p-2 rounded-lg text-tierra hover:bg-arena transition-colors"
+                  className="p-2 text-texto-muted hover:text-bordo transition-colors"
                   title="Cerrar sesión"
                 >
-                  <LogOut className="w-5 h-5" />
+                  <LogOut className="w-4 h-4" />
                 </button>
               </div>
-            ) : (
-              <Link
-                href="/login"
-                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-tierra hover:bg-arena transition-colors"
-              >
-                <User className="w-4 h-4" />
-                Ingresar
-              </Link>
             )}
 
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-tierra hover:bg-arena transition-colors"
+              className="md:hidden p-2 text-texto hover:text-bordo transition-colors"
             >
               {mobileMenuOpen ? (
                 <X className="w-5 h-5" />
@@ -137,42 +134,31 @@ export default function Header({ user }: HeaderProps) {
                   key={item.name}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    'px-4 py-3 rounded-lg text-sm font-medium transition-colors',
-                    pathname === item.href
-                      ? 'bg-terracota/10 text-terracota'
-                      : 'text-tierra hover:bg-arena'
-                  )}
+                  className={`px-4 py-3 text-sm font-medium ${
+                    isActive(item.href)
+                      ? 'text-bordo bg-crema'
+                      : 'text-texto hover:bg-crema'
+                  }`}
                 >
                   {item.name}
                 </Link>
               ))}
               <hr className="my-2 border-border" />
-              {user ? (
+              {user && (
                 <>
                   <div className="px-4 py-2">
-                    <span className="block text-sm font-medium text-tierra">
+                    <span className="block text-sm font-medium text-texto">
                       {user.razon_social || user.email}
                     </span>
-                    <span className="block text-xs text-muted">{user.email}</span>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-tierra hover:bg-arena transition-colors"
+                    className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-texto hover:bg-crema"
                   >
                     <LogOut className="w-4 h-4" />
                     Cerrar sesión
                   </button>
                 </>
-              ) : (
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-tierra hover:bg-arena transition-colors"
-                >
-                  <User className="w-4 h-4" />
-                  Ingresar
-                </Link>
               )}
             </div>
           </div>

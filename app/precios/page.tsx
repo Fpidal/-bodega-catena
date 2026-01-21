@@ -74,7 +74,7 @@ export default async function PreciosPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-crema">
       <Header
         user={
           user
@@ -86,11 +86,11 @@ export default async function PreciosPage() {
         }
       />
 
-      <main className="container-wide py-8">
+      <main className="container-wide pt-24 pb-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="font-serif text-4xl font-bold text-tierra mb-2">Lista de Precios</h1>
-            <p className="text-muted">Precios mayoristas actualizados - IVA incluido</p>
+            <p className="text-texto-muted text-sm uppercase tracking-wider mb-2">Precios Mayoristas</p>
+            <h1 className="font-serif text-3xl font-semibold text-texto">Lista de Precios</h1>
           </div>
           <button className="btn btn-outline btn-sm hidden md:flex">
             <Download className="w-4 h-4" />
@@ -99,39 +99,39 @@ export default async function PreciosPage() {
         </div>
 
         {/* Pricing legend */}
-        <div className="bg-crema rounded-xl p-4 mb-8 flex flex-wrap gap-6 text-sm">
+        <div className="bg-blanco-roto rounded-lg border border-border p-4 mb-8 flex flex-wrap gap-6 text-sm">
           <div>
-            <span className="font-semibold text-tierra">Precio Neto:</span>
-            <span className="text-muted ml-2">Sin IVA</span>
+            <span className="font-semibold text-texto">Precio Neto:</span>
+            <span className="text-texto-muted ml-2">Sin IVA</span>
           </div>
           <div>
-            <span className="font-semibold text-tierra">Precio IVA:</span>
-            <span className="text-muted ml-2">Por caja (6 botellas)</span>
+            <span className="font-semibold text-texto">Precio IVA:</span>
+            <span className="text-texto-muted ml-2">Por caja</span>
           </div>
           <div>
-            <span className="font-semibold text-tierra">Precio Botella:</span>
-            <span className="text-muted ml-2">Unitario con IVA</span>
+            <span className="font-semibold text-texto">Precio Botella:</span>
+            <span className="text-texto-muted ml-2">Unitario con IVA</span>
           </div>
         </div>
 
         {/* Price tables by marca */}
         <div className="space-y-8">
           {marcasOrdenadas.map(([marcaNombre, { productos: productosLista, logo_url }]) => (
-            <div key={marcaNombre} className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
-              {/* Marca header */}
-              <div className="bg-gradient-to-r from-tierra to-tierra-light px-6 py-4 flex items-center gap-4">
+            <div key={marcaNombre} className="rounded-lg overflow-hidden shadow-sm">
+              {/* Brand Header Premium */}
+              <div className="brand-header">
                 {logo_url ? (
                   <img
                     src={logo_url}
                     alt={marcaNombre}
-                    className="h-10 w-auto object-contain bg-white rounded px-2 py-1"
+                    className="brand-logo"
                   />
                 ) : (
-                  <Wine className="w-6 h-6 text-white/80" />
+                  <Wine className="w-6 h-6 text-texto-muted" />
                 )}
-                <h2 className="font-serif text-xl font-semibold text-white">{marcaNombre}</h2>
-                <span className="ml-auto text-white/70 text-sm">
-                  {productosLista.length} productos
+                <h2 className="brand-name">{marcaNombre}</h2>
+                <span className="ml-auto text-texto-muted text-sm font-sans">
+                  {productosLista.length} {productosLista.length === 1 ? 'vino' : 'vinos'}
                 </span>
               </div>
 
@@ -153,24 +153,22 @@ export default async function PreciosPage() {
                   <tbody>
                     {productosLista.map((producto) => (
                       <tr key={producto.id}>
-                        <td className="font-mono text-sm text-muted">{producto.codigo}</td>
-                        <td className="font-medium text-tierra">{producto.nombre}</td>
-                        <td className="hidden md:table-cell text-muted">{producto.categoria?.nombre}</td>
-                        <td className="hidden lg:table-cell text-muted">{producto.presentacion}</td>
-                        <td className="text-right text-muted">{formatPrecio(producto.precio_neto)}</td>
-                        <td className="text-right font-semibold text-terracota">
+                        <td className="font-mono text-sm text-texto-muted">{producto.codigo}</td>
+                        <td className="font-medium text-texto">{producto.nombre}</td>
+                        <td className="hidden md:table-cell text-texto-muted">{producto.categoria?.nombre}</td>
+                        <td className="hidden lg:table-cell text-texto-muted">{producto.presentacion}</td>
+                        <td className="text-right text-texto-muted">{formatPrecio(producto.precio_neto)}</td>
+                        <td className="text-right font-semibold text-texto">
                           {formatPrecio(producto.precio_iva)}
                         </td>
-                        <td className="text-right hidden sm:table-cell text-muted">
+                        <td className="text-right hidden sm:table-cell text-texto-muted">
                           {formatPrecio(producto.precio_botella)}
                         </td>
-                        <td className="text-center">
+                        <td className="text-center text-texto-secundario text-sm">
                           {producto.stock === 0 ? (
-                            <span className="badge bg-gray-100 text-gray-500">Sin stock</span>
-                          ) : producto.stock < 10 ? (
-                            <span className="badge-warning">{producto.stock}</span>
+                            <span className="text-texto-muted">—</span>
                           ) : (
-                            <span className="badge-success">{producto.stock}</span>
+                            <span>{producto.stock}</span>
                           )}
                         </td>
                       </tr>
@@ -184,9 +182,9 @@ export default async function PreciosPage() {
 
         {/* Empty state */}
         {marcasOrdenadas.length === 0 && (
-          <div className="text-center py-16 bg-white rounded-xl border border-border">
-            <Wine className="w-16 h-16 text-muted/30 mx-auto mb-4" />
-            <p className="text-muted text-lg">No hay productos disponibles</p>
+          <div className="text-center py-16 bg-blanco-roto rounded-lg border border-border">
+            <Wine className="w-16 h-16 text-texto-muted/30 mx-auto mb-4" />
+            <p className="text-texto-muted text-lg">No hay productos disponibles</p>
           </div>
         )}
       </main>

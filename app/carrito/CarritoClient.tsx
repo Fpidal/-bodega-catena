@@ -14,22 +14,41 @@ import {
   Loader2,
   ArrowLeft,
   Gift,
+  Download,
+  RotateCcw,
+  Clock,
 } from 'lucide-react';
 import { useHydratedCart } from '@/lib/store';
-import { formatPrecio } from '@/lib/utils';
+import { formatPrecio, formatFecha } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
-import type { Cliente, Promocion } from '@/lib/types';
+import { descargarOrdenPDF } from '@/lib/pdf';
+import type { Cliente, Promocion, Producto } from '@/lib/types';
 import { CODIGOS_DESCUENTO } from '@/lib/types';
+
+interface OrdenAnteriorItem {
+  cantidad: number;
+  producto: Producto | null;
+}
+
+interface OrdenAnterior {
+  id: string;
+  numero: string;
+  total: number;
+  created_at: string;
+  orden_items: OrdenAnteriorItem[];
+}
 
 interface CarritoClientProps {
   cliente: Cliente;
   promociones: Promocion[];
+  ordenesAnteriores: OrdenAnterior[];
 }
 
-export default function CarritoClient({ cliente, promociones }: CarritoClientProps) {
+export default function CarritoClient({ cliente, promociones, ordenesAnteriores }: CarritoClientProps) {
   const router = useRouter();
   const {
     items,
+    addItem,
     updateQuantity,
     removeItem,
     clearCart,
@@ -40,6 +59,16 @@ export default function CarritoClient({ cliente, promociones }: CarritoClientPro
     descuentoCodigo,
     setCodigoDescuento,
   } = useHydratedCart();
+
+  // Repetir pedido anterior
+  const handleRepetirPedido = (orden: OrdenAnterior) => {
+    clearCart();
+    orden.orden_items.forEach((item) => {
+      if (item.producto) {
+        addItem(item.producto, item.cantidad);
+      }
+    });
+  };
 
   const [codigoInput, setCodigoInput] = useState('');
   const [codigoError, setCodigoError] = useState<string | null>(null);
@@ -94,6 +123,16 @@ export default function CarritoClient({ cliente, promociones }: CarritoClientPro
     setCodigoSuccess(null);
   };
 
+  // Generar número de orden único
+  const generarNumeroOrden = () => {
+    const fecha = new Date();
+    const año = fecha.getFullYear();
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+    return `OC-${año}-${timestamp}${random}`;
+  };
+
+  // Generar orden: guarda en DB, descarga PDF y va al historial
   const handleGenerarOrden = async () => {
     if (items.length === 0) return;
 
@@ -102,7 +141,7 @@ export default function CarritoClient({ cliente, promociones }: CarritoClientPro
     try {
       const supabase = createClient();
 
-      // Create order
+      // Create order (el numero se genera automáticamente por trigger en DB)
       const { data: orden, error: ordenError } = await supabase
         .from('ordenes')
         .insert({
@@ -118,7 +157,21 @@ export default function CarritoClient({ cliente, promociones }: CarritoClientPro
         .select()
         .single();
 
-      if (ordenError) throw ordenError;
+      if (ordenError) {
+        console.error('Error en ordenes:', JSON.stringify(ordenError, null, 2));
+        console.error('Código:', ordenError.code);
+        console.error('Mensaje:', ordenError.message);
+        console.error('Detalles:', ordenError.details);
+        throw new Error(`Error al crear orden: ${ordenError.message || ordenError.code || 'Error desconocido'}`);
+      }
+
+      // Calcular bonificación Saint Felicien para DB
+      const sfItemsDB = items.filter(item =>
+        item.producto.marca?.nombre?.toLowerCase().includes('saint felicien') ||
+        item.producto.nombre?.toLowerCase().includes('saint felicien')
+      );
+      const cajasDBSF = sfItemsDB.reduce((sum, item) => sum + item.cantidad, 0);
+      const bonificacionDBSF = Math.floor(cajasDBSF / 10) * 2;
 
       // Create order items
       const ordenItems = items.map((item) => ({
@@ -129,16 +182,164 @@ export default function CarritoClient({ cliente, promociones }: CarritoClientPro
         subtotal: item.producto.precio_iva * item.cantidad,
       }));
 
+      // Agregar bonificación como item separado (precio $0)
+      if (bonificacionDBSF > 0 && sfItemsDB.length > 0) {
+        ordenItems.push({
+          orden_id: orden.id,
+          producto_id: sfItemsDB[0].producto.id,
+          cantidad: bonificacionDBSF,
+          precio_unitario: 0,
+          subtotal: 0,
+        });
+      }
+
       const { error: itemsError } = await supabase.from('orden_items').insert(ordenItems);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('Error en orden_items:', JSON.stringify(itemsError, null, 2));
+        throw new Error(`Error al crear items: ${itemsError.message || 'Error desconocido'}`);
+      }
 
-      // Clear cart and redirect
+      // Descargar PDF con el número de orden real
+      // Incluir bonificaciones 10+2 Saint Felicien
+      const pdfItems: Array<{
+        cantidad: number;
+        precio_unitario: number;
+        subtotal: number;
+        producto: { nombre: string; codigo: string; marca?: { nombre: string } | null };
+      }> = [];
+
+      // Calcular bonificación Saint Felicien
+      const saintFelicienItems = items.filter(item =>
+        item.producto.marca?.nombre?.toLowerCase().includes('saint felicien') ||
+        item.producto.nombre?.toLowerCase().includes('saint felicien')
+      );
+      const cajasSF = saintFelicienItems.reduce((sum, item) => sum + item.cantidad, 0);
+      const bonificacionSF = Math.floor(cajasSF / 10) * 2;
+
+      items.forEach((item) => {
+        pdfItems.push({
+          cantidad: item.cantidad,
+          precio_unitario: item.producto.precio_iva,
+          subtotal: item.producto.precio_iva * item.cantidad,
+          producto: {
+            nombre: item.producto.nombre,
+            codigo: item.producto.codigo,
+            marca: item.producto.marca,
+          },
+        });
+      });
+
+      // Agregar bonificación como línea separada
+      if (bonificacionSF > 0 && saintFelicienItems.length > 0) {
+        const primerSF = saintFelicienItems[0];
+        pdfItems.push({
+          cantidad: bonificacionSF,
+          precio_unitario: 0,
+          subtotal: 0,
+          producto: {
+            nombre: `${primerSF.producto.nombre} (BONIFICACIÓN 10+2)`,
+            codigo: primerSF.producto.codigo,
+            marca: primerSF.producto.marca,
+          },
+        });
+      }
+
+      await descargarOrdenPDF({
+        orden: {
+          numero: orden.numero,
+          subtotal,
+          descuento_codigo: descuentoCodigoMonto,
+          descuento_promocion: descuentoPromocionMonto,
+          total,
+          created_at: orden.created_at,
+        },
+        cliente: {
+          razon_social: cliente.razon_social,
+          cuit: cliente.cuit,
+          direccion: cliente.direccion,
+          ciudad: cliente.ciudad,
+          provincia: cliente.provincia,
+          email: cliente.email,
+          telefono: cliente.telefono,
+        },
+        items: pdfItems,
+      });
+
+      // Clear cart and redirect to historial
       clearCart();
-      router.push(`/pedido/${orden.id}`);
+      router.push('/historial');
     } catch (error) {
       console.error('Error creating order:', error);
-      alert('Error al generar la orden. Por favor intentá de nuevo.');
+
+      // Generar número para el fallback
+      const numeroFallback = generarNumeroOrden();
+
+      // Descargar PDF como fallback con bonificaciones
+      const fallbackItems: Array<{
+        cantidad: number;
+        precio_unitario: number;
+        subtotal: number;
+        producto: { nombre: string; codigo: string; marca?: { nombre: string } | null };
+      }> = [];
+
+      const sfItems = items.filter(item =>
+        item.producto.marca?.nombre?.toLowerCase().includes('saint felicien') ||
+        item.producto.nombre?.toLowerCase().includes('saint felicien')
+      );
+      const sfCajas = sfItems.reduce((sum, item) => sum + item.cantidad, 0);
+      const sfBonificacion = Math.floor(sfCajas / 10) * 2;
+
+      items.forEach((item) => {
+        fallbackItems.push({
+          cantidad: item.cantidad,
+          precio_unitario: item.producto.precio_iva,
+          subtotal: item.producto.precio_iva * item.cantidad,
+          producto: {
+            nombre: item.producto.nombre,
+            codigo: item.producto.codigo,
+            marca: item.producto.marca,
+          },
+        });
+      });
+
+      if (sfBonificacion > 0 && sfItems.length > 0) {
+        const primerSF = sfItems[0];
+        fallbackItems.push({
+          cantidad: sfBonificacion,
+          precio_unitario: 0,
+          subtotal: 0,
+          producto: {
+            nombre: `${primerSF.producto.nombre} (BONIFICACIÓN 10+2)`,
+            codigo: primerSF.producto.codigo,
+            marca: primerSF.producto.marca,
+          },
+        });
+      }
+
+      await descargarOrdenPDF({
+        orden: {
+          numero: numeroFallback,
+          subtotal,
+          descuento_codigo: descuentoCodigoMonto,
+          descuento_promocion: 0,
+          total,
+          created_at: new Date().toISOString(),
+        },
+        cliente: {
+          razon_social: cliente.razon_social,
+          cuit: cliente.cuit,
+          direccion: cliente.direccion,
+          ciudad: cliente.ciudad,
+          provincia: cliente.provincia,
+          email: cliente.email,
+          telefono: cliente.telefono,
+        },
+        items: fallbackItems,
+      });
+
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
+      alert(`No se pudo guardar en el sistema (${errorMsg}), pero se descargó el PDF.`);
     } finally {
       setLoading(false);
     }
@@ -146,15 +347,47 @@ export default function CarritoClient({ cliente, promociones }: CarritoClientPro
 
   if (items.length === 0) {
     return (
-      <div className="text-center py-16">
-        <ShoppingBag className="w-20 h-20 text-muted/30 mx-auto mb-6" />
-        <h2 className="font-serif text-2xl font-semibold text-tierra mb-2">
-          Tu carrito está vacío
-        </h2>
-        <p className="text-muted mb-8">Agregá productos desde nuestro catálogo</p>
-        <Link href="/catalogo" className="btn btn-primary">
-          Ver Catálogo
-        </Link>
+      <div className="space-y-8">
+        <div className="text-center py-12">
+          <ShoppingBag className="w-16 h-16 text-texto-muted/30 mx-auto mb-4" />
+          <h2 className="font-serif text-2xl font-semibold text-texto mb-2">
+            Tu carrito está vacío
+          </h2>
+          <p className="text-texto-muted mb-6">Agregá productos desde nuestro catálogo</p>
+          <Link href="/catalogo" className="btn btn-primary">
+            Ver Catálogo
+          </Link>
+        </div>
+
+        {/* Pedidos anteriores */}
+        {ordenesAnteriores.length > 0 && (
+          <div className="card">
+            <div className="flex items-center gap-2 mb-4">
+              <Clock className="w-5 h-5 text-bordo" />
+              <h3 className="font-serif text-lg font-semibold text-texto">Pedidos Anteriores</h3>
+            </div>
+            <p className="text-sm text-texto-muted mb-4">¿Querés repetir un pedido anterior?</p>
+            <div className="space-y-3">
+              {ordenesAnteriores.map((orden) => (
+                <div key={orden.id} className="flex items-center justify-between p-4 bg-crema rounded-lg">
+                  <div>
+                    <p className="font-medium text-texto">Orden #{orden.numero}</p>
+                    <p className="text-sm text-texto-muted">
+                      {formatFecha(orden.created_at)} • {orden.orden_items.length} productos • {formatPrecio(orden.total)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleRepetirPedido(orden)}
+                    className="btn btn-outline btn-sm"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Repetir
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -169,8 +402,12 @@ export default function CarritoClient({ cliente, promociones }: CarritoClientPro
             Seguir comprando
           </Link>
           <button
-            onClick={() => clearCart()}
-            className="text-sm text-muted hover:text-error transition-colors"
+            onClick={() => {
+              if (window.confirm('¿Estás seguro de que querés vaciar el carrito?')) {
+                clearCart();
+              }
+            }}
+            className="text-sm text-texto-muted hover:text-bordo transition-colors"
           >
             Vaciar carrito
           </button>
@@ -182,18 +419,18 @@ export default function CarritoClient({ cliente, promociones }: CarritoClientPro
             className="card flex gap-4"
           >
             {/* Product image placeholder */}
-            <div className="w-24 h-24 bg-gradient-to-br from-crema to-arena rounded-lg flex items-center justify-center shrink-0">
-              <ShoppingBag className="w-8 h-8 text-terracota/30" />
+            <div className="w-24 h-24 bg-crema rounded-lg flex items-center justify-center shrink-0">
+              <ShoppingBag className="w-8 h-8 text-bordo/30" />
             </div>
 
             {/* Product info */}
             <div className="flex-1 min-w-0">
-              <span className="text-xs text-muted">{item.producto.marca?.nombre}</span>
-              <h3 className="font-serif font-semibold text-tierra truncate">
+              <span className="text-xs text-texto-muted">{item.producto.marca?.nombre}</span>
+              <h3 className="font-serif font-semibold text-texto truncate">
                 {item.producto.nombre}
               </h3>
-              <p className="text-sm text-muted">{item.producto.presentacion}</p>
-              <p className="text-terracota font-semibold mt-1">
+              <p className="text-sm text-texto-muted">{item.producto.presentacion}</p>
+              <p className="text-bordo font-semibold mt-1">
                 {formatPrecio(item.producto.precio_iva)} / caja
               </p>
             </div>
@@ -202,31 +439,31 @@ export default function CarritoClient({ cliente, promociones }: CarritoClientPro
             <div className="flex flex-col items-end gap-2">
               <button
                 onClick={() => removeItem(item.producto.id)}
-                className="p-1 text-muted hover:text-error transition-colors"
+                className="p-1 text-texto-muted hover:text-bordo transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
 
-              <div className="flex items-center border border-border rounded-lg">
+              <div className="flex items-center border border-border-strong rounded-lg">
                 <button
                   onClick={() => updateQuantity(item.producto.id, item.cantidad - 1)}
-                  className="p-2 text-tierra hover:bg-arena transition-colors"
+                  className="p-2 text-texto hover:bg-crema transition-colors"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="w-12 text-center font-medium text-tierra">
+                <span className="w-12 text-center font-medium text-texto">
                   {item.cantidad}
                 </span>
                 <button
                   onClick={() => updateQuantity(item.producto.id, item.cantidad + 1)}
-                  className="p-2 text-tierra hover:bg-arena transition-colors"
+                  className="p-2 text-texto hover:bg-crema transition-colors"
                   disabled={item.cantidad >= item.producto.stock}
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
 
-              <span className="font-semibold text-tierra">
+              <span className="font-semibold text-texto">
                 {formatPrecio(item.producto.precio_iva * item.cantidad)}
               </span>
             </div>
@@ -237,37 +474,89 @@ export default function CarritoClient({ cliente, promociones }: CarritoClientPro
       {/* Order summary */}
       <div className="lg:col-span-1">
         <div className="card sticky top-24">
-          <h2 className="font-serif text-xl font-semibold text-tierra mb-6">
+          <h2 className="font-serif text-xl font-semibold text-texto mb-6">
             Resumen del Pedido
           </h2>
 
-          {/* Applied promotions */}
-          {promocionesAplicables.length > 0 && (
-            <div className="mb-6 p-4 bg-success/10 rounded-lg">
-              <div className="flex items-center gap-2 text-success font-medium mb-2">
-                <Gift className="w-4 h-4" />
-                Promociones aplicadas
-              </div>
-              {promocionesAplicables.map((promo) => (
-                <p key={promo.id} className="text-sm text-success/80">
-                  {promo.titulo}: -{promo.valor}%
-                </p>
-              ))}
+          {/* Beneficios aplicados */}
+          <div className="mb-6 p-4 bg-verde-oliva/10 rounded-lg border border-verde-oliva/20">
+            <div className="flex items-center gap-2 text-verde-oliva font-semibold mb-3">
+              <Gift className="w-5 h-5" />
+              Beneficios Aplicados
             </div>
-          )}
+
+            {/* Descuento 50% general */}
+            <div className="flex items-start gap-2 mb-2">
+              <Check className="w-4 h-4 text-verde-oliva mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-verde-oliva">Descuento Distribuidor 50%</p>
+                <p className="text-xs text-verde-oliva/70">Sobre precios de lista</p>
+              </div>
+            </div>
+
+            {/* Promoción 10+2 Saint Felicien */}
+            {(() => {
+              const saintFelicienItems = items.filter(item =>
+                item.producto.marca?.nombre?.toLowerCase().includes('saint felicien') ||
+                item.producto.nombre?.toLowerCase().includes('saint felicien')
+              );
+              const cajasSF = saintFelicienItems.reduce((sum, item) => sum + item.cantidad, 0);
+              const bonificacion = Math.floor(cajasSF / 10) * 2;
+
+              if (cajasSF >= 10) {
+                return (
+                  <div className="flex items-start gap-2 mt-2 pt-2 border-t border-verde-oliva/20">
+                    <Check className="w-4 h-4 text-verde-oliva mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-verde-oliva">Promoción 10+2 Saint Felicien</p>
+                      <p className="text-xs text-verde-oliva/70">
+                        {cajasSF} cajas → <span className="font-semibold">+{bonificacion} cajas bonificadas</span>
+                      </p>
+                    </div>
+                  </div>
+                );
+              } else if (cajasSF > 0) {
+                return (
+                  <div className="flex items-start gap-2 mt-2 pt-2 border-t border-verde-oliva/20 opacity-60">
+                    <AlertCircle className="w-4 h-4 text-texto-muted mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm text-texto-muted">Promoción 10+2 Saint Felicien</p>
+                      <p className="text-xs text-texto-muted">
+                        Llevás {cajasSF} cajas, sumá {10 - cajasSF} más para bonificación
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
+            {/* Otras promociones (excluyendo Saint Felicien que ya se muestra como 10+2) */}
+            {promocionesAplicables
+              .filter((promo) => !promo.titulo?.toLowerCase().includes('saint felicien'))
+              .map((promo) => (
+              <div key={promo.id} className="flex items-start gap-2 mt-2 pt-2 border-t border-verde-oliva/20">
+                <Check className="w-4 h-4 text-verde-oliva mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-verde-oliva">{promo.titulo}</p>
+                  <p className="text-xs text-verde-oliva/70">-{promo.valor}% de descuento</p>
+                </div>
+              </div>
+            ))}
+          </div>
 
           {/* Discount code */}
           <div className="mb-6">
             <label className="label">Código de descuento</label>
             {codigoDescuento ? (
-              <div className="flex items-center justify-between p-3 bg-terracota/10 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-bordo/10 rounded-lg">
                 <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-terracota" />
-                  <span className="font-medium text-terracota">{codigoDescuento}</span>
+                  <Check className="w-4 h-4 text-bordo" />
+                  <span className="font-medium text-bordo">{codigoDescuento}</span>
                 </div>
                 <button
                   onClick={handleQuitarCodigo}
-                  className="text-sm text-muted hover:text-error"
+                  className="text-sm text-texto-muted hover:text-bordo"
                 >
                   Quitar
                 </button>
@@ -288,13 +577,13 @@ export default function CarritoClient({ cliente, promociones }: CarritoClientPro
               </div>
             )}
             {codigoError && (
-              <p className="text-error text-sm mt-2 flex items-center gap-1">
+              <p className="text-bordo text-sm mt-2 flex items-center gap-1">
                 <AlertCircle className="w-4 h-4" />
                 {codigoError}
               </p>
             )}
             {codigoSuccess && (
-              <p className="text-success text-sm mt-2 flex items-center gap-1">
+              <p className="text-verde-oliva text-sm mt-2 flex items-center gap-1">
                 <Check className="w-4 h-4" />
                 {codigoSuccess}
               </p>
@@ -315,34 +604,41 @@ export default function CarritoClient({ cliente, promociones }: CarritoClientPro
 
           {/* Totals */}
           <div className="space-y-3 mb-6">
-            <div className="flex justify-between text-tierra">
-              <span>Subtotal ({items.reduce((sum, i) => sum + i.cantidad, 0)} cajas)</span>
+            {/* Precio de lista (sin descuento 50%) */}
+            <div className="flex justify-between text-texto-muted">
+              <span>Precio de Lista ({items.reduce((sum, i) => sum + i.cantidad, 0)} cajas)</span>
+              <span className="line-through">{formatPrecio(subtotal * 2)}</span>
+            </div>
+
+            {/* Descuento 50% */}
+            <div className="flex justify-between text-verde-oliva">
+              <span>Descuento Distribuidor 50%</span>
+              <span>-{formatPrecio(subtotal)}</span>
+            </div>
+
+            {/* Subtotal con descuento */}
+            <div className="flex justify-between text-texto font-medium">
+              <span>Subtotal</span>
               <span>{formatPrecio(subtotal)}</span>
             </div>
 
             {descuentoCodigoMonto > 0 && (
-              <div className="flex justify-between text-terracota">
+              <div className="flex justify-between text-bordo">
                 <span>Descuento código ({descuentoCodigo}%)</span>
                 <span>-{formatPrecio(descuentoCodigoMonto)}</span>
               </div>
             )}
 
-            {descuentoPromocionMonto > 0 && (
-              <div className="flex justify-between text-success">
-                <span>Descuento promoción</span>
-                <span>-{formatPrecio(descuentoPromocionMonto)}</span>
-              </div>
-            )}
 
             <hr className="border-border" />
 
-            <div className="flex justify-between text-xl font-bold">
-              <span className="text-tierra">Total</span>
-              <span className="text-terracota">{formatPrecio(total)}</span>
+            <div className="flex justify-between text-xl font-semibold">
+              <span className="text-texto">Total</span>
+              <span className="text-bordo">{formatPrecio(total)}</span>
             </div>
           </div>
 
-          {/* Checkout button */}
+          {/* Button */}
           <button
             onClick={handleGenerarOrden}
             disabled={loading}
@@ -351,19 +647,22 @@ export default function CarritoClient({ cliente, promociones }: CarritoClientPro
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Procesando...
+                Generando orden...
               </>
             ) : (
-              'Generar Orden de Compra'
+              <>
+                <Download className="w-5 h-5" />
+                Generar Orden de Compra
+              </>
             )}
           </button>
 
           {/* Client info */}
           <div className="mt-6 pt-6 border-t border-border">
-            <p className="text-sm text-muted mb-1">Facturar a:</p>
-            <p className="font-medium text-tierra">{cliente.razon_social}</p>
-            <p className="text-sm text-muted">CUIT: {cliente.cuit}</p>
-            <p className="text-sm text-muted">{cliente.direccion}</p>
+            <p className="text-sm text-texto-muted mb-1">Facturar a:</p>
+            <p className="font-medium text-texto">{cliente.razon_social}</p>
+            <p className="text-sm text-texto-muted">CUIT: {cliente.cuit}</p>
+            <p className="text-sm text-texto-muted">{cliente.direccion}</p>
           </div>
         </div>
       </div>

@@ -146,14 +146,14 @@ export function delay(ms: number): Promise<void> {
  */
 export function getEstadoColor(estado: string): string {
   const colores: Record<string, string> = {
-    pendiente: 'badge-warning',
-    confirmada: 'badge-terracota',
-    en_proceso: 'badge-terracota',
-    enviada: 'badge-tierra',
+    pendiente: 'badge-dorado',
+    confirmada: 'badge-bordo',
+    en_proceso: 'badge-bordo',
+    enviada: 'badge-dorado',
     entregada: 'badge-success',
     cancelada: 'badge bg-gray-200 text-gray-600',
   };
-  return colores[estado] || 'badge-tierra';
+  return colores[estado] || 'badge-bordo';
 }
 
 /**

@@ -1,6 +1,7 @@
 'use client';
 
-import { Download } from 'lucide-react';
+import { useState } from 'react';
+import { Download, Loader2 } from 'lucide-react';
 import { descargarOrdenPDF } from '@/lib/pdf';
 
 interface PDFOrden {
@@ -42,31 +43,44 @@ interface PedidoPDFButtonProps {
 }
 
 export default function PedidoPDFButton({ orden, cliente, items }: PedidoPDFButtonProps) {
-  const handleDownload = () => {
-    const pdfItems = items
-      .filter((item): item is PDFItem & { producto: PDFProducto } => item.producto !== null && item.producto !== undefined)
-      .map((item) => ({
-        cantidad: item.cantidad,
-        precio_unitario: item.precio_unitario,
-        subtotal: item.subtotal,
-        producto: {
-          nombre: item.producto.nombre,
-          codigo: item.producto.codigo,
-          marca: item.producto.marca,
-        },
-      }));
+  const [loading, setLoading] = useState(false);
 
-    descargarOrdenPDF({
-      orden,
-      cliente,
-      items: pdfItems,
-    });
+  const handleDownload = async () => {
+    setLoading(true);
+    try {
+      const pdfItems = items
+        .filter((item): item is PDFItem & { producto: PDFProducto } => item.producto !== null && item.producto !== undefined)
+        .map((item) => ({
+          cantidad: item.cantidad,
+          precio_unitario: item.precio_unitario,
+          subtotal: item.subtotal,
+          producto: {
+            nombre: item.precio_unitario === 0
+              ? `${item.producto.nombre} (BONIFICACIÓN 10+2)`
+              : item.producto.nombre,
+            codigo: item.producto.codigo,
+            marca: item.producto.marca,
+          },
+        }));
+
+      await descargarOrdenPDF({
+        orden,
+        cliente,
+        items: pdfItems,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <button onClick={handleDownload} className="btn btn-outline">
-      <Download className="w-4 h-4" />
-      Descargar PDF
+    <button onClick={handleDownload} disabled={loading} className="btn btn-outline">
+      {loading ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <Download className="w-4 h-4" />
+      )}
+      {loading ? 'Generando...' : 'Descargar PDF'}
     </button>
   );
 }

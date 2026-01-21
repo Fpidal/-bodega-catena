@@ -4,12 +4,42 @@ import { useState, useMemo } from 'react';
 import type { Producto, Marca, Categoria, ProductFilters } from '@/lib/types';
 import { formatPrecio } from '@/lib/utils';
 import { useCartStore } from '@/lib/store';
-import { Search, Plus, Minus, ShoppingCart, Filter } from 'lucide-react';
+import { Search, ChevronUp } from 'lucide-react';
 
 interface CatalogoClientProps {
   productos: Producto[];
   marcas: Marca[];
   categorias: Categoria[];
+}
+
+// Helper para procesar el nombre del producto
+function processProductName(nombre: string, marcaNombre: string | undefined) {
+  let cleanName = nombre;
+  if (marcaNombre) {
+    const marcaLower = marcaNombre.toLowerCase();
+    const nombreLower = nombre.toLowerCase();
+    if (nombreLower.startsWith(marcaLower)) {
+      cleanName = nombre.slice(marcaNombre.length).trim();
+    }
+  }
+
+  // Extraer año si existe
+  const yearMatch = cleanName.match(/['']?(\d{2})\b|20(\d{2})\b/);
+  let year = '';
+  if (yearMatch) {
+    const digits = yearMatch[1] || yearMatch[2];
+    year = `'${digits}`;
+    cleanName = cleanName.replace(yearMatch[0], '').trim();
+  } else {
+    const isBlanco = cleanName.toLowerCase().includes('chardonnay') ||
+                     cleanName.toLowerCase().includes('sauvignon blanc') ||
+                     cleanName.toLowerCase().includes('torrontés');
+    year = isBlanco ? "'22" : "'21";
+  }
+
+  cleanName = cleanName.replace(/^[-–—\s]+/, '').replace(/[-–—\s]+$/, '').trim();
+
+  return { name: cleanName || nombre, year };
 }
 
 export default function CatalogoClient({
@@ -51,11 +81,16 @@ export default function CatalogoClient({
 
   // Agrupar por marca
   const productosPorMarca = useMemo(() => {
-    const grupos: Record<string, Producto[]> = {};
+    const grupos: Record<string, { productos: Producto[], logo_url: string | null }> = {};
     filteredProducts.forEach((p) => {
       const marcaNombre = p.marca?.nombre || 'Sin Marca';
-      if (!grupos[marcaNombre]) grupos[marcaNombre] = [];
-      grupos[marcaNombre].push(p);
+      if (!grupos[marcaNombre]) {
+        grupos[marcaNombre] = {
+          productos: [],
+          logo_url: p.marca?.logo_url || null
+        };
+      }
+      grupos[marcaNombre].productos.push(p);
     });
     return grupos;
   }, [filteredProducts]);
@@ -74,33 +109,15 @@ export default function CatalogoClient({
     setCantidades({ ...cantidades, [producto.id]: 1 });
   };
 
-  const getEnCarrito = (id: string) => {
-    const item = items.find(i => i.producto.id === id);
-    return item?.cantidad || 0;
-  };
-
   return (
     <div className="space-y-6">
       {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-sm border border-border p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Búsqueda */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
-            <input
-              type="text"
-              placeholder="Buscar por nombre, código o marca..."
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="input pl-10 w-full"
-            />
-          </div>
-
-          {/* Marca */}
+      <div className="catalogo-filters">
+        <div className="catalogo-filter">
+          <Search />
           <select
             value={filters.marcaId}
             onChange={(e) => setFilters({ ...filters, marcaId: e.target.value })}
-            className="input md:w-48"
           >
             <option value="">Todas las marcas</option>
             {marcas.map((marca) => (
@@ -109,14 +126,14 @@ export default function CatalogoClient({
               </option>
             ))}
           </select>
+        </div>
 
-          {/* Categoría */}
+        <div className="catalogo-filter">
           <select
             value={filters.categoriaId}
             onChange={(e) => setFilters({ ...filters, categoriaId: e.target.value })}
-            className="input md:w-48"
           >
-            <option value="">Todas las categorías</option>
+            <option value="">Todos los tipos</option>
             {categorias.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.nombre}
@@ -124,111 +141,102 @@ export default function CatalogoClient({
             ))}
           </select>
         </div>
-
-        <div className="mt-3 text-sm text-muted">
-          {filteredProducts.length} productos encontrados
-        </div>
       </div>
 
-      {/* Tabla de productos por marca */}
+      {/* Productos por marca */}
       {Object.keys(productosPorMarca).length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-muted text-lg">No se encontraron productos con los filtros seleccionados.</p>
+          <p className="text-texto-muted text-lg">No se encontraron productos.</p>
         </div>
       ) : (
-        Object.entries(productosPorMarca).map(([marca, prods]) => (
-          <div key={marca} className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
-            <div className="bg-tierra px-6 py-3 flex items-center gap-4">
-              {prods[0]?.marca?.logo_url && (
+        Object.entries(productosPorMarca).map(([marca, { productos: prods, logo_url }]) => (
+          <div key={marca} className="rounded-lg overflow-hidden shadow-sm">
+            {/* Brand Header */}
+            <div className="catalogo-brand-header">
+              {logo_url && (
                 <img
-                  src={prods[0].marca.logo_url}
+                  src={logo_url}
                   alt={marca}
-                  className="h-10 w-auto object-contain bg-white rounded px-2 py-1"
+                  className="catalogo-brand-logo"
                 />
               )}
-              <h2 className="font-serif text-xl font-semibold text-white">{marca}</h2>
+              <span className="catalogo-brand-name">{marca}</span>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-crema/50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-tierra">Código</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-tierra">Producto</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-tierra hidden md:table-cell">Categoría</th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold text-tierra hidden sm:table-cell">Unid/Caja</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold text-tierra">Precio Caja</th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold text-tierra w-32">Cajas</th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold text-tierra w-24">Agregar</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {prods.map((producto) => {
-                    const enCarrito = getEnCarrito(producto.id);
-                    return (
-                      <tr key={producto.id} className="hover:bg-crema/30 transition-colors">
-                        <td className="px-4 py-3 font-mono text-sm text-muted">{producto.codigo}</td>
-                        <td className="px-4 py-3">
-                          <div>
-                            <span className="font-medium text-tierra">{producto.nombre}</span>
-                            {producto.descripcion && (
-                              <p className="text-xs text-muted mt-0.5">{producto.descripcion}</p>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-muted hidden md:table-cell">
-                          {producto.categoria?.nombre || '-'}
-                        </td>
-                        <td className="px-4 py-3 text-center text-sm hidden sm:table-cell">
-                          <span className="bg-arena px-2 py-1 rounded font-medium text-tierra">
-                            {producto.unidades_por_caja}
+
+            {/* Products */}
+            <div>
+              {prods.map((producto) => {
+                const stockAlto = producto.stock >= 50;
+                const { name: productName, year } = processProductName(
+                  producto.nombre,
+                  producto.marca?.nombre
+                );
+                const categoria = producto.categoria?.nombre || 'Tintos';
+
+                return (
+                  <div key={producto.id} className="catalogo-product">
+                    {/* Info */}
+                    <div className="catalogo-product-info">
+                      <div className="catalogo-product-main">
+                        <span className="catalogo-product-name">{productName}</span>
+                        <span className="catalogo-product-year">{year}</span>
+                        <span className="catalogo-product-meta">
+                          Mendoza | {categoria}
+                        </span>
+                      </div>
+                      <div className="catalogo-product-details">
+                        <span className="catalogo-product-presentation">
+                          Caja x {producto.unidades_por_caja}
+                        </span>
+                        {stockAlto && (
+                          <span className="catalogo-badge-stock">
+                            <ChevronUp />
+                            Stock alto
                           </span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <span className="font-bold text-terracota">{formatPrecio(producto.precio_iva)}</span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={() => setCantidad(producto.id, getCantidad(producto.id) - 1)}
-                              className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-crema transition-colors"
-                            >
-                              <Minus className="w-4 h-4" />
-                            </button>
-                            <input
-                              type="number"
-                              min="1"
-                              max="999"
-                              value={getCantidad(producto.id)}
-                              onChange={(e) => setCantidad(producto.id, parseInt(e.target.value) || 1)}
-                              className="w-14 h-8 text-center border border-border rounded-lg text-sm"
-                            />
-                            <button
-                              onClick={() => setCantidad(producto.id, getCantidad(producto.id) + 1)}
-                              className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-crema transition-colors"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <button
-                            onClick={() => agregarAlCarrito(producto)}
-                            className="btn btn-primary btn-sm"
-                            title="Agregar al carrito"
-                          >
-                            <ShoppingCart className="w-4 h-4" />
-                          </button>
-                          {enCarrito > 0 && (
-                            <div className="text-xs text-success mt-1">
-                              {enCarrito} en carrito
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="catalogo-product-actions">
+                      <span className="catalogo-product-price">
+                        {formatPrecio(producto.precio_iva)}
+                      </span>
+
+                      <div className="catalogo-qty">
+                        <button
+                          onClick={() => setCantidad(producto.id, getCantidad(producto.id) - 1)}
+                          className="catalogo-qty-btn"
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          min="1"
+                          max="999"
+                          value={getCantidad(producto.id)}
+                          onChange={(e) => setCantidad(producto.id, parseInt(e.target.value) || 1)}
+                          className="catalogo-qty-input"
+                        />
+                        <button
+                          onClick={() => setCantidad(producto.id, getCantidad(producto.id) + 1)}
+                          className="catalogo-qty-btn"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={() => agregarAlCarrito(producto)}
+                        className="catalogo-btn-agregar"
+                        disabled={producto.stock === 0}
+                      >
+                        AGREGAR
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))

@@ -50,29 +50,41 @@ export default async function CatalogoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-crema">
       <Header
-        user={
-          user
-            ? {
-                email: user.email || '',
-                razon_social: cliente?.razon_social,
-              }
-            : null
-        }
+        user={{
+          email: user.email || '',
+          razon_social: cliente?.razon_social,
+        }}
       />
 
-      <main className="container-wide py-8">
-        <div className="mb-8">
-          <h1 className="font-serif text-4xl font-bold text-tierra mb-2">Cargar Pedido</h1>
-          <p className="text-muted">Seleccioná los productos y agregá al carrito</p>
+      <main className="catalogo-container">
+        {/* Header con logo */}
+        <div className="catalogo-header">
+          <img
+            src="https://agxpjqqfoozgsuuwaskd.supabase.co/storage/v1/object/public/Logos%20CATENA/bodega%20catena%20lineas%20.jpg"
+            alt="Catena Zapata"
+            className="catalogo-logo"
+          />
+          <h1 className="catalogo-title">Seleccionar Productos</h1>
         </div>
 
-        <CatalogoClient
-          productos={productos || []}
-          marcas={marcas || []}
-          categorias={categorias || []}
-        />
+        {/* Imagen de la bodega */}
+        <div className="catalogo-hero">
+          <img
+            src="https://agxpjqqfoozgsuuwaskd.supabase.co/storage/v1/object/public/Logos%20CATENA/imagen%20bodeaga%202.jpeg"
+            alt="Bodega Catena Zapata"
+          />
+        </div>
+
+        {/* Contenido del catálogo */}
+        <div className="catalogo-content">
+          <CatalogoClient
+            productos={productos || []}
+            marcas={marcas || []}
+            categorias={categorias || []}
+          />
+        </div>
       </main>
     </div>
   );
