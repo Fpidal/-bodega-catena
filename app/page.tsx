@@ -37,13 +37,21 @@ export default async function HomePage() {
   // Si no está logueado, mostrar página de bienvenida simple
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-tierra via-tierra to-terracota">
+      <div className="min-h-screen bg-gradient-to-br from-tierra via-tierra to-terracota relative">
+        {/* Background image */}
+        <div
+          className="absolute inset-0 opacity-20 bg-cover bg-center"
+          style={{ backgroundImage: 'url(https://agxpjqqfoozgsuuwaskd.supabase.co/storage/v1/object/public/Logos%20CATENA/imagen%20bodeaga%201.jpeg)' }}
+        />
+
         {/* Header simple */}
-        <header className="container-wide py-6">
+        <header className="container-wide py-6 relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <Wine className="w-6 h-6 text-white" />
-            </div>
+            <img
+              src="https://agxpjqqfoozgsuuwaskd.supabase.co/storage/v1/object/public/Logos%20CATENA/logo%20portada.jpeg"
+              alt="Bodega Catena Zapata"
+              className="h-14 w-auto rounded-lg"
+            />
             <div>
               <span className="font-serif text-xl font-semibold text-white block">
                 Bodega Catena Zapata
@@ -54,7 +62,7 @@ export default async function HomePage() {
         </header>
 
         {/* Hero */}
-        <main className="container-wide py-16 md:py-24">
+        <main className="container-wide py-16 md:py-24 relative z-10">
           <div className="max-w-2xl">
             <h1 className="font-serif text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
               Portal Exclusivo para Distribuidores
@@ -91,7 +99,7 @@ export default async function HomePage() {
         </main>
 
         {/* Footer */}
-        <footer className="container-wide py-8 border-t border-white/10">
+        <footer className="container-wide py-8 border-t border-white/10 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/60 text-sm">
             <p>&copy; {new Date().getFullYear()} Bodega Catena Zapata. Todos los derechos reservados.</p>
             <p>Mendoza, Argentina</p>

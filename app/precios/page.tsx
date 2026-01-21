@@ -22,6 +22,7 @@ interface ProductoConMarca {
     id: string;
     nombre: string;
     orden: number;
+    logo_url: string | null;
   };
   categoria: {
     nombre: string;
@@ -48,7 +49,7 @@ export default async function PreciosPage() {
   // Get all products grouped by marca
   const { data: productos } = await supabase
     .from('productos')
-    .select('id, codigo, nombre, presentacion, precio_neto, precio_iva, precio_botella, stock, marca:marcas(id, nombre, orden), categoria:categorias(nombre)')
+    .select('id, codigo, nombre, presentacion, precio_neto, precio_iva, precio_botella, stock, marca:marcas(id, nombre, orden, logo_url), categoria:categorias(nombre)')
     .eq('activo', true)
     .order('marca_id')
     .order('nombre');
@@ -59,12 +60,13 @@ export default async function PreciosPage() {
     if (!acc[marcaNombre]) {
       acc[marcaNombre] = {
         orden: producto.marca?.orden || 999,
+        logo_url: producto.marca?.logo_url || null,
         productos: [],
       };
     }
     acc[marcaNombre].productos.push(producto);
     return acc;
-  }, {} as Record<string, { orden: number; productos: ProductoConMarca[] }>);
+  }, {} as Record<string, { orden: number; logo_url: string | null; productos: ProductoConMarca[] }>);
 
   // Sort by marca orden
   const marcasOrdenadas = Object.entries(productosPorMarca).sort(
@@ -114,11 +116,19 @@ export default async function PreciosPage() {
 
         {/* Price tables by marca */}
         <div className="space-y-8">
-          {marcasOrdenadas.map(([marcaNombre, { productos: productosLista }]) => (
+          {marcasOrdenadas.map(([marcaNombre, { productos: productosLista, logo_url }]) => (
             <div key={marcaNombre} className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
               {/* Marca header */}
-              <div className="bg-gradient-to-r from-tierra to-tierra-light px-6 py-4 flex items-center gap-3">
-                <Wine className="w-6 h-6 text-white/80" />
+              <div className="bg-gradient-to-r from-tierra to-tierra-light px-6 py-4 flex items-center gap-4">
+                {logo_url ? (
+                  <img
+                    src={logo_url}
+                    alt={marcaNombre}
+                    className="h-10 w-auto object-contain bg-white rounded px-2 py-1"
+                  />
+                ) : (
+                  <Wine className="w-6 h-6 text-white/80" />
+                )}
                 <h2 className="font-serif text-xl font-semibold text-white">{marcaNombre}</h2>
                 <span className="ml-auto text-white/70 text-sm">
                   {productosLista.length} productos

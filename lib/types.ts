@@ -6,6 +6,7 @@ export interface Marca {
   slug: string;
   descripcion: string | null;
   imagen_url: string | null;
+  logo_url: string | null;
   orden: number;
   created_at: string;
 }

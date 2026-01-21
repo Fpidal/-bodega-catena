@@ -138,7 +138,14 @@ export default function CatalogoClient({
       ) : (
         Object.entries(productosPorMarca).map(([marca, prods]) => (
           <div key={marca} className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
-            <div className="bg-tierra px-6 py-3">
+            <div className="bg-tierra px-6 py-3 flex items-center gap-4">
+              {prods[0]?.marca?.logo_url && (
+                <img
+                  src={prods[0].marca.logo_url}
+                  alt={marca}
+                  className="h-10 w-auto object-contain bg-white rounded px-2 py-1"
+                />
+              )}
               <h2 className="font-serif text-xl font-semibold text-white">{marca}</h2>
             </div>
             <div className="overflow-x-auto">
