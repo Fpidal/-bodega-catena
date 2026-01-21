@@ -36,12 +36,21 @@ export default async function CarritoPage() {
     .eq('activa', true);
 
   // Get previous orders for "repeat order" feature
-  const { data: ordenesAnteriores } = await supabase
+  const { data: ordenesAnterioresRaw } = await supabase
     .from('ordenes')
     .select('id, numero, total, created_at, orden_items(cantidad, producto:productos(id, nombre, codigo, precio_iva, stock, unidades_por_caja, marca_id, categoria_id, marca:marcas(*), categoria:categorias(*)))')
     .eq('cliente_id', cliente.id)
     .order('created_at', { ascending: false })
     .limit(5);
+
+  // Transform data to ensure producto is a single object, not an array
+  const ordenesAnteriores = (ordenesAnterioresRaw || []).map((orden) => ({
+    ...orden,
+    orden_items: orden.orden_items.map((item: { cantidad: number; producto: unknown }) => ({
+      cantidad: item.cantidad,
+      producto: Array.isArray(item.producto) ? item.producto[0] || null : item.producto,
+    })),
+  }));
 
   return (
     <div className="min-h-screen bg-crema">
