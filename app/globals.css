@@ -1417,3 +1417,336 @@ h1, h2, h3, h4, h5, h6 {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ===== RESPONSIVE - MÓVIL ===== */
+
+/* Catálogo container */
+@media (max-width: 768px) {
+  .catalogo-container {
+    padding: 80px 16px 24px;
+  }
+
+  .catalogo-header {
+    margin-bottom: 16px;
+  }
+
+  .catalogo-logo {
+    width: 160px;
+  }
+
+  .catalogo-title {
+    font-size: 1.4rem;
+  }
+
+  .catalogo-hero {
+    max-width: 100%;
+    margin-bottom: 16px;
+  }
+
+  /* Filtros en columna */
+  .catalogo-filters {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .catalogo-filter {
+    padding: 10px 14px;
+  }
+
+  /* Brand header */
+  .catalogo-brand-header {
+    padding: 12px 16px;
+  }
+
+  .catalogo-brand-name {
+    font-size: 1rem;
+  }
+
+  /* Producto - layout vertical en móvil */
+  .catalogo-product {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .catalogo-product-info {
+    width: 100%;
+  }
+
+  .catalogo-product-main {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .catalogo-product-name {
+    font-size: 1rem;
+  }
+
+  .catalogo-product-year {
+    font-size: 1rem;
+  }
+
+  .catalogo-product-meta {
+    font-size: 0.75rem;
+    margin-left: 0;
+    margin-top: 4px;
+    width: 100%;
+  }
+
+  .catalogo-product-details {
+    margin-top: 4px;
+  }
+
+  /* Actions - fila con todo el ancho */
+  .catalogo-product-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .catalogo-product-price {
+    font-size: 1.1rem;
+    min-width: auto;
+  }
+
+  .catalogo-qty {
+    transform: scale(0.95);
+  }
+
+  .catalogo-btn-agregar {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Portal home */
+@media (max-width: 768px) {
+  .portal-container {
+    padding: 20px 16px;
+  }
+
+  .portal-content {
+    max-width: 100%;
+  }
+
+  .portal-logo-header img {
+    width: 180px;
+  }
+
+  .portal-brand {
+    font-size: 1.3rem;
+  }
+
+  .portal-title {
+    font-size: 0.95rem;
+  }
+
+  .portal-image {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  /* Accesos rápidos - vertical en móvil */
+  .portal-quick-access {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .quick-access-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 16px;
+    min-width: 100%;
+    min-height: auto;
+    padding: 16px 20px;
+    border-right: none;
+    border-bottom: 1px solid rgba(93, 64, 55, 0.15);
+  }
+
+  .quick-access-item:last-child {
+    border-bottom: none;
+  }
+
+  .quick-access-item svg {
+    margin-bottom: 0;
+  }
+
+  .quick-access-title {
+    text-align: left;
+  }
+
+  .quick-access-subtitle {
+    text-align: left;
+  }
+
+  .btn-comenzar-pedido {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Carrito */
+@media (max-width: 768px) {
+  .container-wide {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+}
+
+/* Tablas responsive */
+@media (max-width: 640px) {
+  .table th,
+  .table td {
+    padding: 0.625rem 0.5rem;
+    font-size: 0.8125rem;
+  }
+
+  .table th:first-child,
+  .table td:first-child {
+    padding-left: 0.75rem;
+  }
+
+  .table th:last-child,
+  .table td:last-child {
+    padding-right: 0.75rem;
+  }
+}
+
+/* Botones responsive */
+@media (max-width: 640px) {
+  .btn {
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .btn-lg {
+    padding: 0.875rem 1.5rem;
+  }
+}
+
+/* Hero section móvil */
+@media (max-width: 768px) {
+  .hero-section {
+    min-height: 40vh;
+  }
+
+  .hero-title {
+    font-size: 1.75rem;
+    letter-spacing: 0.1em;
+  }
+
+  .hero-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .hero-content {
+    padding: 24px;
+  }
+
+  .btn-ingresar {
+    padding: 10px 24px;
+    font-size: 0.75rem;
+  }
+}
+
+/* ===== CARRITO MÓVIL ===== */
+@media (max-width: 640px) {
+  /* Items del carrito - layout vertical */
+  .carrito-item {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .carrito-item-img {
+    width: 100%;
+    height: 80px;
+  }
+
+  .carrito-item-actions {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+/* ===== PEDIDO DETALLE MÓVIL ===== */
+@media (max-width: 640px) {
+  /* Grid de stats en una columna */
+  .pedido-stats {
+    grid-template-columns: 1fr;
+  }
+
+  /* Datos de facturación en una columna */
+  .pedido-facturacion {
+    grid-template-columns: 1fr;
+  }
+
+  /* Beneficios en una columna */
+  .pedido-beneficios {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== HISTORIAL MÓVIL ===== */
+@media (max-width: 640px) {
+  /* Stats del historial */
+  .historial-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== LOGIN MÓVIL ===== */
+@media (max-width: 640px) {
+  .login-container {
+    padding: 16px;
+  }
+
+  .login-box {
+    padding: 24px 20px;
+  }
+
+  .login-logo {
+    width: 140px;
+  }
+}
+
+/* ===== GENERAL MOBILE FIXES ===== */
+@media (max-width: 640px) {
+  /* Títulos más pequeños */
+  h1 {
+    font-size: 1.5rem !important;
+  }
+
+  h2 {
+    font-size: 1.25rem !important;
+  }
+
+  /* Padding del main content */
+  main.container-wide,
+  main.container-narrow {
+    padding-top: 5rem;
+  }
+
+  /* Inputs full width */
+  .input,
+  .select,
+  textarea {
+    font-size: 16px; /* Evita zoom en iOS */
+  }
+
+  /* Fix scrollbar en tablas */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Espaciado en cards */
+  .card {
+    border-radius: 8px;
+  }
+}

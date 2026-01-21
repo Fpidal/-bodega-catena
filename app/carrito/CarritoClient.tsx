@@ -416,10 +416,10 @@ export default function CarritoClient({ cliente, promociones, ordenesAnteriores 
         {items.map((item) => (
           <div
             key={item.producto.id}
-            className="card flex gap-4"
+            className="card flex flex-col sm:flex-row gap-4"
           >
             {/* Product image placeholder */}
-            <div className="w-24 h-24 bg-crema rounded-lg flex items-center justify-center shrink-0">
+            <div className="w-full sm:w-24 h-20 sm:h-24 bg-crema rounded-lg flex items-center justify-center shrink-0">
               <ShoppingBag className="w-8 h-8 text-bordo/30" />
             </div>
 
@@ -436,14 +436,7 @@ export default function CarritoClient({ cliente, promociones, ordenesAnteriores 
             </div>
 
             {/* Quantity controls */}
-            <div className="flex flex-col items-end gap-2">
-              <button
-                onClick={() => removeItem(item.producto.id)}
-                className="p-1 text-texto-muted hover:text-bordo transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-
+            <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2">
               <div className="flex items-center border border-border-strong rounded-lg">
                 <button
                   onClick={() => updateQuantity(item.producto.id, item.cantidad - 1)}
@@ -466,6 +459,13 @@ export default function CarritoClient({ cliente, promociones, ordenesAnteriores 
               <span className="font-semibold text-texto">
                 {formatPrecio(item.producto.precio_iva * item.cantidad)}
               </span>
+
+              <button
+                onClick={() => removeItem(item.producto.id)}
+                className="p-1 text-texto-muted hover:text-bordo transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
           </div>
         ))}
