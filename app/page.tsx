@@ -137,8 +137,8 @@ export default async function HomePage() {
             <div className="w-12 h-12 bg-terracota/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-terracota/20 transition-colors">
               <Wine className="w-6 h-6 text-terracota" />
             </div>
-            <h3 className="font-serif text-lg font-semibold text-tierra mb-1">Catálogo</h3>
-            <p className="text-sm text-muted">Ver productos y hacer pedidos</p>
+            <h3 className="font-serif text-lg font-semibold text-tierra mb-1">Cargar Pedido</h3>
+            <p className="text-sm text-muted">Seleccionar productos</p>
           </Link>
 
           <Link
@@ -222,7 +222,7 @@ export default async function HomePage() {
               Explorá nuestro catálogo de vinos premium y realizá tu primer pedido
             </p>
             <Link href="/catalogo" className="btn btn-primary">
-              Ver Catálogo
+              Cargar Pedido
             </Link>
           </div>
         )}

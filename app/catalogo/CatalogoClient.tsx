@@ -155,8 +155,9 @@ export default function CatalogoClient({
                     <th className="px-4 py-3 text-left text-sm font-semibold text-tierra">Código</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-tierra">Producto</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-tierra hidden md:table-cell">Categoría</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold text-tierra">Precio</th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold text-tierra w-32">Cantidad</th>
+                    <th className="px-4 py-3 text-center text-sm font-semibold text-tierra hidden sm:table-cell">Unid/Caja</th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-tierra">Precio Caja</th>
+                    <th className="px-4 py-3 text-center text-sm font-semibold text-tierra w-32">Cajas</th>
                     <th className="px-4 py-3 text-center text-sm font-semibold text-tierra w-24">Agregar</th>
                   </tr>
                 </thead>
@@ -176,6 +177,11 @@ export default function CatalogoClient({
                         </td>
                         <td className="px-4 py-3 text-sm text-muted hidden md:table-cell">
                           {producto.categoria?.nombre || '-'}
+                        </td>
+                        <td className="px-4 py-3 text-center text-sm hidden sm:table-cell">
+                          <span className="bg-arena px-2 py-1 rounded font-medium text-tierra">
+                            {producto.unidades_por_caja}
+                          </span>
                         </td>
                         <td className="px-4 py-3 text-right">
                           <span className="font-bold text-terracota">{formatPrecio(producto.precio_iva)}</span>

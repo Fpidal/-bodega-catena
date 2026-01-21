@@ -4,8 +4,8 @@ import Header from '@/components/Header';
 import CatalogoClient from './CatalogoClient';
 
 export const metadata = {
-  title: 'Catálogo - Bodega Catena Zapata',
-  description: 'Catálogo completo de vinos de Bodega Catena Zapata',
+  title: 'Cargar Pedido - Bodega Catena Zapata',
+  description: 'Seleccionar productos para tu pedido',
 };
 
 export default async function CatalogoPage() {
@@ -64,8 +64,8 @@ export default async function CatalogoPage() {
 
       <main className="container-wide py-8">
         <div className="mb-8">
-          <h1 className="font-serif text-4xl font-bold text-tierra mb-2">Catálogo de Vinos</h1>
-          <p className="text-muted">Explorá nuestra selección completa de vinos premium</p>
+          <h1 className="font-serif text-4xl font-bold text-tierra mb-2">Cargar Pedido</h1>
+          <p className="text-muted">Seleccioná los productos y agregá al carrito</p>
         </div>
 
         <CatalogoClient
